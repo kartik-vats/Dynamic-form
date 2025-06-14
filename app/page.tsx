@@ -13,6 +13,7 @@ import './global.css'; // Or the path to your global CSS file
 // Schema and uiSchema for Club Data Form using RJSF
 
 const schema: RJSFSchema = {
+ 
   type: 'object',
   properties: {
     section1: {
@@ -164,7 +165,7 @@ const schema: RJSFSchema = {
         notes: { type: 'string', title: 'Any other notes, suggestions, or queries from the FICs (Optional)' }
       }
     }
-  }
+}
 };
 
 const uiSchema = {
@@ -202,6 +203,7 @@ const uiSchema = {
 };
 
 const handleSubmit = async ({ formData }: any) => {
+  
   try {
     const res = await fetch('/api/form', {
       method: 'POST',
@@ -211,6 +213,7 @@ const handleSubmit = async ({ formData }: any) => {
 
     const result = await res.json();
     alert(result.message || 'Submitted successfully!');
+    console.log('Form submitted successfully:', result);
   } catch (err) {
     console.error('Submission failed:', err);
   }
