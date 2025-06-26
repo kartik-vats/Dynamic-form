@@ -1,10 +1,13 @@
 'use client';
-
 import React from 'react';
-import Form from '@rjsf/core';
+import { withTheme, FormProps } from '@rjsf/core';
+import { Theme as Bootstrap4Theme } from '@rjsf/bootstrap-4';
 import validator from '@rjsf/validator-ajv8';
-import { RJSFSchema, UiSchema } from '@rjsf/utils';
-import './global.css'; // Or the path to your global CSS file
+import { ArrayFieldTemplateProps, RJSFSchema, UiSchema } from '@rjsf/utils';
+import './global.css';
+
+// ✅ Properly typed form component
+const Form = withTheme<{}, RJSFSchema, {}>(Bootstrap4Theme);
 
 // Schema and uiSchema for Club Data Form using RJSF
 
@@ -13,12 +16,21 @@ import './global.css'; // Or the path to your global CSS file
 // Schema and uiSchema for Club Data Form using RJSF
 
 const schema: RJSFSchema = {
- 
   type: 'object',
   properties: {
     section1: {
       type: 'object',
       title: 'Club Information',
+      required: [
+        'type',
+        'name',
+        'about',
+        'bannerImage',
+        'logo',
+        'whyJoin',
+        'howToJoin'
+        // 'department' is conditionally required for Technical Society
+      ],
       properties: {
         type: {
           type: 'string',
@@ -28,8 +40,7 @@ const schema: RJSFSchema = {
         name: {
           type: 'string',
           title: 'Club/Society Name',
-          
-       },
+        },
         about: { type: 'string', title: 'About the Club/Society' },
         bannerImage: { type: 'string', title: 'Banner Image (max 10MB)', format: 'data-url' },
         logo: { type: 'string', title: 'Logo (max 10MB)', format: 'data-url' },
@@ -39,47 +50,63 @@ const schema: RJSFSchema = {
         department: {
           type: 'string',
           title: 'Departments (Required for Technical Society)',
-          
-            enum: ['Civil', 'Computer', 'ECE', 'Electrical', 'Mechanical', 'PIE', 'Chemistry', 'Physics', 'Mathematics', 'Computer Application', 'Humanities and Social Sciences', 'Business Administration']
-          ,
+          enum: [
+            'Civil', 'Computer', 'ECE', 'Electrical', 'Mechanical', 'PIE',
+            'Chemistry', 'Physics', 'Mathematics', 'Computer Application',
+            'Humanities and Social Sciences', 'Business Administration'
+          ],
           uniqueItems: true
         }
       },
       dependencies: {
-    type: {
-      oneOf: [
-        {
-          properties: {
-            type: { const: 'Club' },
-            name: {
-              enum: [
-                'Fine Arts', 'Photog', 'MAD', 'HLAD', 'ELAD',
-                'Students Activity Club', 'PG Club', 'Hiking and Trekking Club',
-                'AVA', 'Spicmacay', 'MCC'
-              ]
+        type: {
+          oneOf: [
+            {
+              properties: {
+                type: { const: 'Club'  },
+                name: {
+                  enum: [
+                    'Fine Arts', 'Photog', 'MAD', 'HLAD', 'ELAD',
+                    'Students Activity Club', 'PG Club', 'Hiking and Trekking Club',
+                    'AVA', 'Spicmacay', 'MCC'
+                  ]
+                }
+              },
+              required: ['name']
+            },
+            {
+              properties: {
+                type: { const: 'Technical Society' },
+                name: {
+                  enum: [
+                    'Society of Automotive Engg (SAE)', 'AeroModelling Club',
+                    'Astronomy Club: Antariksh', 'Innovation & Incubation',
+                    'Electroreck', 'Embedded Systems & Robotic Control:EMR',
+                    'Infrastructure', 'Mechsoc', 'Microbus', 'Technobyte'
+                  ]
+                },
+                department: {
+                  type: 'string',
+                  title: 'Departments (Required for Technical Society)',
+                  enum: [
+                    'Civil', 'Computer', 'ECE', 'Electrical', 'Mechanical', 'PIE',
+                    'Chemistry', 'Physics', 'Mathematics', 'Computer Application',
+                    'Humanities and Social Sciences', 'Business Administration'
+                  ],
+                  uniqueItems: true
+                }
+              },
+              required: ['name', 'department']
             }
-          }
-        },
-        {
-          properties: {
-            type: { const: 'Technical Society' },
-            name: {
-              enum: [
-                'Society of Automotive Engg (SAE)', 'AeroModelling Club',
-                'Astronomy Club: Antariksh', 'Innovation & Incubation',
-                'Electroreck', 'Embedded Systems & Robotic Control:EMR',
-                'Infrastructure', 'Mechsoc', 'Microbus', 'Technobyte'
-              ]
-            }
-          }
+          ]
         }
-      ]
-    }
-  }
-},
+      }
+    },
+
     section2: {
       type: 'object',
       title: 'Events',
+      required: ['events'],
       properties: {
         events: {
           type: 'array',
@@ -87,6 +114,7 @@ const schema: RJSFSchema = {
           minItems: 1,
           items: {
             type: 'object',
+            required: ['title', 'description'], // 📌 You may choose if 'photos' is required
             properties: {
               title: { type: 'string', title: 'Event Title' },
               description: { type: 'string', title: 'Event Description' },
@@ -101,9 +129,11 @@ const schema: RJSFSchema = {
         }
       }
     },
+
     section3: {
       type: 'object',
       title: 'Faculty Incharge',
+      required: ['FICs'],
       properties: {
         FICs: {
           type: 'array',
@@ -113,9 +143,11 @@ const schema: RJSFSchema = {
         }
       }
     },
+
     section4: {
       type: 'object',
       title: 'Club Members',
+      required: ['members'],
       properties: {
         members: {
           type: 'array',
@@ -123,21 +155,27 @@ const schema: RJSFSchema = {
           minItems: 1,
           items: {
             type: 'object',
+            required: ['roll', 'position'],
             properties: {
               roll: { type: 'string', title: 'Roll Number' },
               position: {
                 type: 'string',
                 title: 'Position',
-                enum: ['Secretary', 'President', 'Vice President', 'Joint Secretary', 'Member', 'Sponsorship Secretary']
+                enum: [
+                  'Secretary', 'President', 'Vice President',
+                  'Joint Secretary', 'Member', 'Sponsorship Secretary'
+                ]
               }
             }
           }
         }
       }
     },
+
     section5: {
       type: 'object',
       title: 'Club Socials',
+      required: ['socials'],
       properties: {
         socials: {
           type: 'array',
@@ -145,6 +183,7 @@ const schema: RJSFSchema = {
           minItems: 1,
           items: {
             type: 'object',
+            required: ['platform', 'handle', 'link'],
             properties: {
               platform: {
                 type: 'string',
@@ -158,15 +197,20 @@ const schema: RJSFSchema = {
         }
       }
     },
+
     section6: {
       type: 'object',
       title: 'Additional Notes',
       properties: {
-        notes: { type: 'string', title: 'Any other notes, suggestions, or queries from the FICs (Optional)' }
+        notes: {
+          type: 'string',
+          title: 'Any other notes, suggestions, or queries from the FICs (Optional)'
+        }
       }
     }
-}
+  }
 };
+
 
 const uiSchema = {
     section1: {
@@ -201,7 +245,34 @@ const uiSchema = {
     }
   }
 };
-
+const CustomArrayFieldTemplate = (props: ArrayFieldTemplateProps) => {
+  return (
+    <div>
+      {props.items.map((element) => (
+        <div key={element.index} className="mb-3">
+          <div>{element.children}</div>
+          {element.hasRemove && (
+            <button
+              className="btn btn-danger"
+              onClick={element.onDropIndexClick(element.index)}
+              type="button"
+            >
+              Remove
+            </button>
+          )}
+          <hr />
+        </div>
+      ))}
+      {props.canAdd && (
+        <button className="btn btn-primary" onClick={props.onAddClick} type="button">
+          {typeof props.uiSchema?.['ui:options']?.addButtonText === 'string'
+            ? props.uiSchema['ui:options'].addButtonText
+            : 'Add Item'}
+        </button>
+      )}
+    </div>
+  );
+};
 const handleSubmit = async ({ formData }: any) => {
   
   try {
@@ -226,14 +297,14 @@ export default function Clubsdetails() {
     <div style={{ maxWidth: 600, margin: 'auto', padding: 20 }}>
       <h1>Club's Details</h1>
       <Form
-        schema={schema}
-        uiSchema={uiSchema}
-        validator={validator}
-        onChange={log('changed')}
-        onSubmit={handleSubmit}
-        onError={log('errors')}
-        formData={{ todos: [''] }} // Optional: one empty todo field to start
-      />
+  schema={schema}
+  uiSchema={uiSchema}
+  validator={validator}
+  templates={{ ArrayFieldTemplate: CustomArrayFieldTemplate }}
+  onChange={log('changed')}
+  onSubmit={handleSubmit}
+  onError={log('errors')}
+/>
     </div>
   );
 }
