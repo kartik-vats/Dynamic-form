@@ -15,3 +15,8 @@ export async function POST(req: NextRequest) {
     return new Response(JSON.stringify({ error: error.message }), { status: 500 });
   }
 }
+export async function GET() {
+  return new Response("This endpoint only accepts POST requests to submit form data.", {
+    status: 200
+  });
+}
